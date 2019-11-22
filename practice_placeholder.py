@@ -1,6 +1,9 @@
 import tensorflow as tf
 import cv2
 import numpy as np
+import imageio
+from utils import scale_back
+from PIL import Image
 
 class Sobel():
     def input_setup(self):
@@ -21,10 +24,10 @@ class Sobel():
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
         num_files_A = sess.run(self.queue_length_A)
-        self.A_input = np.zeros((1, 1, 250, 200, 3))
+        self.A_input = np.zeros((1, 1, 250, 200, 1))
         for i in range(1):
-            image_tensor = sess.run(self.image_A)
-            self.A_input[i] = image_tensor.reshape((1, 250, 200, 3))
+            image_tensor = sess.run(self.image_A[:, :, 0])
+            self.A_input[i] = image_tensor.reshape((1, 250, 200, 1))
 
         coord.request_stop()
         coord.join(threads)
@@ -55,33 +58,24 @@ class Sobel():
 
     def train(self):
         self.input_setup()
+        init = [tf.global_variables_initializer(), tf.local_variables_initializer()]
         input_A = tf.placeholder(tf.float32, [1, 250, 200, 1], name="input_A")
         Sobel = self.struct(input_A)
         with tf.Session() as sess:
+            sess.run(init)
             self.input_read(sess)
             # image_raw_data = tf.gfile.FastGFile('female.jpg', 'rb').read()
             # image_raw_data = cv2.imread('female.jpg')
 
             # image_yuv = tf.image.rgb_to_yuv(image)
             show_pic = sess.run(Sobel, feed_dict={input_A: self.A_input[0]})
-            cv2.imshow('sobel', show_pic)
-            cv2.waitKey(0)
+            show_pic_end = scale_back(1-show_pic)
+
+
+            picture_merge = show_pic_end.reshape((show_pic_end.shape[1], show_pic_end.shape[2]))
+            im = Image.fromarray(picture_merge)
+            imageio.imwrite('a_picture.jpg', im)
+
 
 sobel = Sobel()
 sobel.train()
-
-def showimage_placeholder_opencv(filename):
-    image = cv2.imread(filename)
-
-    #    Create a Tensorflow variable
-    image_tensor = tf.placeholder('uint8', [None, None, 3])
-
-    with tf.Session() as sess:
-        #        image_flap = tf.transpose(image_tensor, perm = [1,0,2])
-        #        sess.run(tf.global_variables_initializer())
-        result = sess.run(image_tensor, feed_dict={image_tensor: image})
-
-    cv2.imshow('result', result)
-    cv2.waitKey(0)
-
-# showimage_placeholder_opencv('female.jpg')
