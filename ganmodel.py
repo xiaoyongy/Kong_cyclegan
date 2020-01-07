@@ -129,7 +129,8 @@ class CycleGan(object):
         #b3 = a_mask*255.0
         # b4 = (b2-b1*(1-a_mask))/a_mask  # scale_back(fake_A*a_mask+rB*(1-a_mask))
 
-        merged_pair = np.concatenate([a1, a2, b1, b2], axis=2)
+        # merged_pair = np.concatenate([a1, a2, b1, b2], axis=2)
+        merged_pair = a2
         merged_pair = merged_pair.reshape((merged_pair.shape[1], merged_pair.shape[2], merged_pair.shape[3]))
         #        print(merged_pair.shape)
         s_dir = 'D:/note/cyclegan/Kong_cycleganMask/samples/'
